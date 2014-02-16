@@ -16,27 +16,26 @@ def puts *x
     return y
 end
 
-$matches = [ [ /www\.youtube\.com\/watch\?((\w+=[\w-]+&)*)v=([\w-]+)/, 3, "http://www.youtube.com/watch?v=", /<title>(.*)<\/title>/im, 1, [ " - YouTube" ] ],
-             [ /youtu\.be\/([\w-]+)/, 1, "http://www.youtube.com/watch?v=", /<title>(.*)<\/title>/im, 1, [ " - YouTube" ] ],
-             [ /y2u\.be\/([\w-]+)/, 1, "http://www.youtube.com/watch?v=", /<title>(.*)<\/title>/im, 1, [ " - YouTube" ] ],
-             [ /www\.youtube\.com\/v\/([\w-]+)/, 1, "http://www.youtube.com/watch?v=", /<title>(.*)<\/title>/im, 1, [ " - YouTube" ] ],
-             [ /i\.imgur\.com\/(\w+)\./, 1, "http://imgur.com/", /<title>(.*)<\/title>/im, 1, [ " - Imgur", "imgur: the simple image sharer", "imgur: the simple 404 page", "imgur: the simple overloaded page" ] ],
-             [ /imgur\.com\/(gallery\/)?(\w+)\b/, 2, "http://imgur.com/", /<title>(.*)<\/title>/im, 1, [ " - Imgur", "imgur: the simple image sharer", "imgur: the simple 404 page", "imgur: the simple overloaded page" ] ],
-             [ /forum\.lowlevel\.eu\/index.php\?([^\s,]+)/, 1, "http://forum.lowlevel.eu/index.php?", /<title>(.*)<\/title>/im, 1, [ ] ],
-             [ /forum\.osdev\.org\/viewtopic.php\?([^\s,]+)/, 1, "http://forum.osdev.org/viewtopic.php?", /<title>(.*)<\/title>/im, 1, [ "OSDev.org • View topic - " ] ],
-             [ /tud\.hicknhack\.org\/forum\/messages\/(\d+)/, 1, "http://tud.hicknhack.org/forum/messages/", /<div class="head">([^<]*)/i, 1, [ ] ],
-             [ /boards\.4chan\.org\/((\w+)\/res\/\d+)#p(\d+)/, 1, "http://boards.4chan.org/<match>.json", [ /.*/m ], 'post = JSON.parse(matches[0][0])["posts"].select { |p| p["no"].to_i == um[3].to_i }[0]; if post; content = "[#{Time.at(post["time"].to_i).strftime("%T")}] #{unless post["com"].nil?; post["com"].gsub(/<br.*$/, " […]"); else; ""; end}"; if post["tim"]; content + " (http://images.4chan.org/#{um[2]}/src/#{post["tim"]}#{post["ext"]})"; else; content; end; else "[Post im Thread nicht gefunden]"; end', [ ] ],
-             [ /boards\.4chan\.org\/((\w+)\/res\/\d+)/, 1, "http://boards.4chan.org/<match>.json", [ /.*/m ], 'op = JSON.parse(matches[0][0])["posts"][0]; "[#{Time.at(op["time"].to_i).strftime("%T")}] #{unless op["sub"].nil? || op["sub"].empty?; op["sub"]; else; unless op["com"].nil?; op["com"].gsub(/<br.*$/, " […]"); else; ""; end; end} (http://images.4chan.org/#{um[2]}/src/#{op["tim"]}#{op["ext"]})"', [ ] ],
-             [ /9gag\.com\/gag\/(\d+)/, 1, "http://9gag.com/gag/", /<title>(.*)<\/title>/im, 1, [ "9GAG - " ] ],
-             [ /golem\.de\/(\d+\/[\d-]+\.html)/, 1, "http://www.golem.de/", /<title>(.*)<\/title>/im, 1, [ " - Golem.de" ] ],
-             [ /sukebei\.nyaa\.eu\/\?page=torrentinfo&tid=(\d+)/, 1, "http://sukebei.nyaa.eu/?page=torrentinfo&tid=", /<td\ class="tinfotorrentname">([^<]*)<\/td>/, 1, [ ] ],
-             [ /sukebei\.nyaa\.eu\/\?page=download&tid=(\d+)/, 1, "http://sukebei.nyaa.eu/?page=torrentinfo&tid=", /<td\ class="tinfotorrentname">([^<]*)<\/td>/, 1, [ ] ],
-             [ /nyaa\.eu\/\?page=torrentinfo&tid=(\d+)/, 1, "http://www.nyaa.eu/?page=torrentinfo&tid=", /<td\ class="tinfotorrentname">([^<]*)<\/td>/, 1, [ ] ],
-             [ /nyaa\.eu\/\?page=download&tid=(\d+)/, 1, "http://www.nyaa.eu/?page=torrentinfo&tid=", /<td\ class="tinfotorrentname">([^<]*)<\/td>/, 1, [ ] ],
-             [ /store\.steampowered\.com\/app\/(\d+)/, 1, "http://store.steampowered.com/app/<match>/?cc=us", /<title>(.*)<\/title>/im, 1, [ " on Steam"] ],
-             [ /(?=\d{3}-\d{1,5}-\d{1,7}-\d{1,7}-\d)(\A[0-9-]{17}\z)/, 2, "http://www.isbnsearch.org/isbn/", /<h2>([^<]*)<\/h2>/, 1, [ ] ],
-             [ /twitter\.com\/(\w+\/status\/\d+)/, 1, "https://twitter.com/", [ /<p\s+class="[^"]*tweet-text[^"]*">(([^<]*|<[^\/]|<\/[^p])*)<\/p>/, /<span\s+class="[^"]*_timestamp[^"]*"\s+data-time="(\d+)"/, /<span>&rlm;<\/span><span\s+class="[^"]*username[^"]*"[^>]*><s>([^<]*)<\/s><b>([^<]*)</ ], '"[#{if Time.at(matches[1][1].to_i).strftime(\'%F\') == Time.new.strftime(\'%F\'); Time.at(matches[1][1].to_i).strftime(\'%T\'); else; Time.at(matches[1][1].to_i).strftime(\'%A, %-d. %B %Y] [%T\'); end}] &lt;#{matches[2][1]}#{matches[2][2]}&gt; #{matches[0][1]}"', [ ] ],
-             [ /www\.henkessoft300\.de/, 1, "http://www.henkessoft3000.de", /<title>(.*)<\/title>/im, 1, [ " lol henkes content is best content!" ] ] ]
+$matches = []
+
+(Dir.entries("matches") - [ ".", ".." ]).each do |match_rule_file|
+    match_rule_source = File.read("matches/#{match_rule_file}").force_encoding(Encoding::UTF_8)
+    match_rule = eval match_rule_source
+
+    $matches << match_rule
+end
+
+class Hash
+    alias old_method_missing method_missing
+
+    def method_missing *args
+        if args.size.eql?(1) && args.first.is_a?(Symbol) && self.has_key?(args.first)
+            self[args.first]
+        else
+            old_method_missing *args
+        end
+    end
+end
 
 $norepost = [ "ponyfac.es", "ragefac.es" ]
 
@@ -346,66 +345,76 @@ class IRC
                         end
                     end
 
-                    for url in $matches
-                        um = url[0].match(msg)
-                        if um
-                            incoming = http_request((url[2] + (url[2].include?('<match>') ? '' : '<match>')).gsub('<match>', um[url[1]]))
+                    for rules in $matches
+                        for rule in rules
+                            for resource in rule.resources
+                                um = resource.pattern.match(msg)
+                                if um
+                                    incoming = http_request((rule.cleanurl + (rule.cleanurl.include?('<match>') ? '' : '<match>')).gsub('<match>', um[resource.group]))
 
-                            if !incoming[0]
-                                send("PRIVMSG #{@chan} :#{src} ist heute für einen #{incoming[1]} verantwortlich.")
-                                break
-                            end
-
-
-                            title = nil
-
-
-                            if url[3].kind_of?(Array)
-                                matches = url[3].map { |m| m.match(incoming[1]) }
-                                if !matches.include?(nil)
-                                    title = eval(url[4])
-                                end
-                            else
-                                title_match = url[3].match(incoming[1])
-                                if title_match
-                                    if url[4].kind_of?(Integer)
-                                        title = title_match[url[4]]
-                                    else
-                                        title = eval(url[4])
+                                    if !incoming[0]
+                                        send("PRIVMSG #{@chan} :#{src} ist heute für einen #{incoming[1]} verantwortlich.")
+                                        break
                                     end
+
+
+                                    title = nil
+
+
+                                    if rule.title.pattern.kind_of?(Array)
+                                        matches = rule.title.pattern.map { |m| m.match(incoming[1]) }
+                                        if !matches.include?(nil)
+                                            title = eval(rule.title.group)
+                                        end
+                                    else
+                                        title_match = rule.title.pattern.match(incoming[1])
+                                        if title_match
+                                            if rule.title.group.kind_of?(Integer)
+                                                title = title_match[rule.title.group]
+                                            else
+                                                title = eval(rule.title.group)
+                                            end
+                                        end
+                                    end
+
+                                    if title
+                                        title.gsub!(/<[^>]*>/, '')
+
+                                        title = CGI.unescapeHTML(title)
+
+                                        for char in $moarhtmlstuff
+                                            title.gsub!(char[0], char[1])
+                                        end
+
+
+                                        title.strip!
+                                        title.gsub!(/\s+/, " ")
+
+                                        for appendix in rule.remove
+                                            title.gsub!(appendix, "")
+                                        end
+
+                                        break if title == ""
+
+                                        title = "Funny prank" if /\brickroll\b/i.match(title)
+
+                                        if (src == "alexander") || (src == "akluth") || (src == "DerHartmut")
+                                            send("PRIVMSG %s :Der alte Lustmolch %s präsentiert Ihnen heute (Taschentücher bereithalten): „%s“" % [ @chan, src, title ])
+                                        else
+                                            send("PRIVMSG %s :%s präsentiert Ihnen heute: „%s“" % [ @chan, src, title ])
+                                        end
+                                        send("PRIVMSG %s :nazi" % @chan) if /\b[Mm]ars?ch\b/.match(title)
+                                    end
+
+                                    escape = true
+
+                                    break if escape
                                 end
+
+                                break if escape
                             end
 
-                            if title
-                                title.gsub!(/<[^>]*>/, '')
-
-                                title = CGI.unescapeHTML(title)
-
-                                for char in $moarhtmlstuff
-                                    title.gsub!(char[0], char[1])
-                                end
-
-
-                                title.strip!
-                                title.gsub!(/\s+/, " ")
-
-                                for appendix in url[5]
-                                    title.gsub!(appendix, "")
-                                end
-
-                                break if title == ""
-
-                                title = "Funny prank" if /\brickroll\b/i.match(title)
-
-                                if (src == "alexander") || (src == "akluth") || (src == "DerHartmut")
-                                    send("PRIVMSG %s :Der alte Lustmolch %s präsentiert Ihnen heute (Taschentücher bereithalten): „%s“" % [ @chan, src, title ])
-                                else
-                                    send("PRIVMSG %s :%s präsentiert Ihnen heute: „%s“" % [ @chan, src, title ])
-                                end
-                                send("PRIVMSG %s :nazi" % @chan) if /\b[Mm]ars?ch\b/.match(title)
-                            end
-
-                            break
+                            break if escape
                         end
                     end
                 end
