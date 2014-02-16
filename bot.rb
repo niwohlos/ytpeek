@@ -8,21 +8,14 @@ require "net/https"
 
 require "json"
 require "yaml"
+require "fileutils"
 
 alias old_puts puts
+
 def puts *x
     y = old_puts x
     $stdout.flush
     return y
-end
-
-$matches = []
-
-(Dir.entries("matches") - [ ".", ".." ]).each do |match_rule_file|
-    match_rule_source = File.read("matches/#{match_rule_file}").force_encoding(Encoding::UTF_8)
-    match_rule = eval match_rule_source
-
-    $matches << match_rule
 end
 
 class Hash
@@ -36,6 +29,8 @@ class Hash
         end
     end
 end
+
+$loaded_plugins = []
 
 $norepost = [ "ponyfac.es", "ragefac.es" ]
 
@@ -76,14 +71,69 @@ def http_request(url)
     end
 end
 
+def load_data directory
+    data = []
+
+    if Dir.exists? directory
+        (Dir.entries(directory) - [ ".", ".." ]).each do |file|
+            next unless File.file?("#{directory}/#{file}")
+
+            source = File.read("#{directory}/#{file}").force_encoding(Encoding::UTF_8)
+
+            data << eval(source, $binding)
+        end
+    end
+
+    data
+end
+
 class IRC
     def initialize(nick, channel, server = "irc.euirc.net", port = 6667)
+        $binding = Kernel.binding
         @srv = server
         @chan = channel
         @nick = nick
         @port = port
         @has_op = false
         @has_joined = true
+
+        @matches = load_data "matches"
+        @plugins = load_data "plugins"
+        @commands = Array.new
+
+        dependencies_satisfied = true
+
+        @plugins.delete_if do |plugin|
+            !plugin.enabled
+        end
+
+        # probably should construct a dependency graph for startup order
+        @plugins.each do |plugin|
+            $loaded_plugins << plugin.name
+
+            plugin.dependencies.each do |dependency|
+                unless @plugins.any?{ |plugin| plugin.name.eql? dependency }
+                    puts "Plugins: %s depends on %s, which is either not enabled or present!" % [ plugin.name, dependency ]
+
+                    dependencies_satisfied = false
+                end
+            end
+        end
+
+        exit 0 unless dependencies_satisfied
+
+        @plugins.each do |plugin|
+            plugin.startup.call plugin.name
+
+            @commands += load_data("plugins/#{plugin.name}/commands")
+        end
+
+        @commands = Hash[%i{channelonly always}.zip(@commands.partition do |command|
+            command.channelonly
+        end)]
+
+        @target = nil
+        @source = nil
     end
     def send(msg)
         puts("<- " + msg)
@@ -141,78 +191,20 @@ class IRC
                     pipe = src
                 end
 
+                @source = src
+                @target = pipe
                 inchn = (pipe == @chan)
 
                 if msg.downcase == "!help"
                     send("PRIVMSG %s :Ein bloatiger YT-Link-Warner" % pipe)
-                    send("PRIVMSG %s :?? [x] – Was ist [x]?" % pipe)
-                    send("PRIVMSG %s :?! [x] – Das ist [x]!" % pipe)
-                    send("PRIVMSG %s :!karma [x] – Wie ist [x]?" % pipe)
-                    send("PRIVMSG %s :[x]++, [x]-- – So ist [x]!" % pipe)
-                    send("PRIVMSG %s :!pdp – Wie und was ist irgendwas" % pipe)
-                    send("PRIVMSG %s :!wtfids [x] – Wie und was ist das" % pipe)
+                    @plugins.each do |plugin|
+                        plugin.help.each  do |help|
+                            send("PRIVMSG %s :#{help}" % pipe)
+                        end
+                    end
                     send("PRIVMSG %s :!is_rp [url] – Wurde die URL schonmal gepostet?" % pipe)
 
                     return true
-                end
-
-                watt_match = /^\?\?\s*([[:word:]♥+-]+)$/.match(msg)
-                if watt_match
-                    desc = $watt[watt_match[1].downcase]
-                    who = $wfw[watt_match[1].downcase]
-                    while desc && (desc[0] == "ref")
-                        who = $wfw[desc[1]]
-                        desc = $watt[desc[1]]
-                    end
-                    if desc
-                        if who
-                            send("PRIVMSG %s :%s: „%s“ (von %s)" % [ pipe, watt_match[1], desc, who ]) if desc
-                        else
-                            send("PRIVMSG %s :%s: „%s“" % [ pipe, watt_match[1], desc ]) if desc
-                        end
-                    end
-                end
-
-                karma_req_match = /^!karma\s+([[:word:]♥+-]+)$/.match(msg)
-                if karma_req_match || (msg == "!karma")
-                    if karma_req_match
-                        resp = karma_req_match[1]
-                    else
-                        resp = src
-                    end
-                    karma = $karmas[resp.downcase]
-                    karma = 0 if !karma
-                    send("PRIVMSG %s :%s hat Karma %i" % [ pipe, resp, karma ])
-                end
-
-                wtf_match = /^!wtfids\s+([[:word:]♥+-]+)$/.match(msg)
-                if msg == "!pdp" || wtf_match
-                    if wtf_match
-                        entry = wtf_match[1].downcase
-                        entry = [ entry, $watt[entry] ]
-                    else
-                        entry = $watt.to_a[rand($watt.size)]
-                    end
-
-                    karma = $karmas[entry[0]]
-                    karma = 0 if !karma
-
-                    desc = $watt[entry[0]]
-                    who = $wfw[entry[0]]
-                    while desc && (desc[0] == "ref")
-                        who = $wfw[desc[1]]
-                        desc = $watt[desc[1]]
-                    end
-
-                    if desc
-                        if who
-                            send("PRIVMSG %s :%s (%s: „%s“) hat Karma %i" % [ pipe, entry[0], who, desc, karma ])
-                        elsif entry[1]
-                            send("PRIVMSG %s :%s („%s“) hat Karma %i" % [ pipe, entry[0], desc, karma ])
-                        else
-                            send("PRIVMSG %s :%s (keine Beschreibung) hat Karma %i" % [ pipe, entry[0], karma ])
-                        end
-                    end
                 end
 
                 rp_match = /^!is_rp\s+(https?:\/\/|)(\S+)/i.match(msg)
@@ -240,62 +232,18 @@ class IRC
                     msg = msg[6..-1].strip;
                 end
 
-                if inchn
-                    karma_match = /^([[:word:]♥+-]+)(\+\+|--)$/.match(msg)
-                    if karma_match
-                        who = karma_match[1].downcase
-                        if src && (who == src.downcase)
-                            send("PRIVMSG %s :Wage es ja nicht, %s..." % [ @chan, inmatch ])
-                        else
-                            $karmas[who] = 0 if !$karmas[who]
-
-                            if karma_match[2] == "++"
-                                if $nazistuff.include?(who)
-                                    send("MODE %s -Q" % [ @chan ])
-                                    send("KICK %s %s :nazi" % [ @chan, inmatch ])
-                                    send("MODE %s +Q" % [ @chan ])
-                                elsif $last_incer[who] && ($last_incer[who][0] == src.downcase) && (Time.new - $last_incer[who][1] < 600)
-                                    send("PRIVMSG %s :%s: Och nö, nicht schon wieder..." % [ @chan, src ])
-                                else
-                                    $karmas[who] += 1
-                                    $last_incer[who] = [ src.downcase, Time.new ]
-                                end
-                            else
-                                if $last_decer[who] && ($last_decer[who][0] == src.downcase) && (Time.new - $last_decer[who][1] < 600)
-                                    send("PRIVMSG %s :%s: Och nö, nicht schon wieder..." % [ @chan, src ])
-                                else
-                                    $karmas[who] -= 1
-                                    $last_decer[who] = [ src.downcase, Time.new ]
-                                end
-                            end
-                        end
+                @commands.always.each do |command|
+                    test = command.pattern.match(msg)
+                    if test
+                        command.command.call test
                     end
+                end
 
-                    def_match = /^\?!\s*([[:word:]♥+-]+)\s*=\s*(.*)$/.match(msg)
-                    if def_match
-                        ndesc = def_match[2]
-                        dest = def_match[1].downcase
-
-                        if /^\(\?\?\s*([[:word:]♥+-]+)\)$/.match(def_match[2])
-                            ndesc = $watt[/^\(\?\?\s*([[:word:]♥+-]+)\)$/.match(def_match[2])[1].downcase]
-                        elsif /^&\(\?\?\s*([[:word:]♥+-]+)\)$/.match(def_match[2])
-                            reftarget = /^&\(\?\?\s*([[:word:]♥+-]+)\)$/.match(def_match[2])[1].downcase
-                            if reftarget != dest
-                                desc = $watt[reftarget]
-                                while desc && (desc[0] == "ref") && (desc[1] != dest)
-                                    desc = $watt[desc[1]]
-                                end
-                            end
-                            if (reftarget == dest) || (desc && (desc[0] == "ref"))
-                                send("PRIVMSG %s :%s: Du willst mich wohl verarschen; bastel dir doch aus zyklischen Graphen deinen Galgen, aber lass mich in Ruhe kthxbye -.-" % [ @chan, src ])
-                                ndesc = nil
-                            else
-                                ndesc = [ "ref", reftarget ]
-                            end
-                        end
-                        if ndesc
-                            $watt[dest] = ndesc
-                            $wfw[dest] = src
+                if inchn
+                    @commands.channelonly.each do |command|
+                        test = command.pattern.match(msg)
+                        if test
+                            command.command.call test
                         end
                     end
 
@@ -345,7 +293,7 @@ class IRC
                         end
                     end
 
-                    for rules in $matches
+                    for rules in @matches
                         for rule in rules
                             for resource in rule.resources
                                 um = resource.pattern.match(msg)
@@ -443,14 +391,21 @@ class IRC
                 end
             end
         rescue Interrupt
-            Thread.new do
-            puts("\nShutting down, writing data to .rubybot...")
-            File.open(".rubybot", "w") { |f|
+            t = Thread.new do
+                puts("\nShutting down, writing data to .rubybot...")
+                File.open(".rubybot", "w") { |f|
                 f.write({ "karmas" => $karmas, "watt" => $watt, "wfw" => $wfw, "urls" => $urls }.to_yaml)
-            }
-            puts("Done, exiting.")
-            exit 0
+                }
+                puts("Shutting down plugins...")
+                @plugins.each do |plugin|
+                    next unless $loaded_plugins.include? plugin.name
+                    plugin.shutdown.call plugin.name
+                end
+                puts("Done, exiting.")
+                exit 0
             end
+
+            t.join
         end
     end
 end
@@ -461,6 +416,12 @@ trap "HUP" do
         File.open(".rubybot", "w") { |f|
             f.write({ "karmas" => $karmas, "watt" => $watt, "wfw" => $wfw, "urls" => $urls }.to_yaml)
         }
+        plugins = load_data "plugins"
+        puts("Shutting down plugins...")
+        plugins.each do |plugin|
+            next unless $loaded_plugins.include? plugin.name
+            plugin.shutdown.call plugin.name
+        end
         puts("Done, exiting.")
         exit 0
     end
@@ -472,6 +433,12 @@ trap "TERM" do
         File.open(".rubybot", "w") { |f|
             f.write({ "karmas" => $karmas, "watt" => $watt, "wfw" => $wfw, "urls" => $urls }.to_yaml)
         }
+        plugins = load_data "plugins"
+        puts("Shutting down plugins...")
+        plugins.each do |plugin|
+            next unless $loaded_plugins.include? plugin.name
+            plugin.shutdown.call plugin.name
+        end
         puts("Done, exiting.")
         exit 0
     end
