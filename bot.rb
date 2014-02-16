@@ -68,7 +68,7 @@ def http_request(url)
         $http_loop = 0
         body = resp.body.force_encoding('utf-8')
         if !body.valid_encoding?
-            body = force_encoding('iso-8859-1').encode('utf-8')
+            body = resp.body.force_encoding('iso-8859-1').encode('utf-8')
         end
         return [ true, body ]
     else
