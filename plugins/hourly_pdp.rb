@@ -16,11 +16,7 @@
             end
             
             date = Date.today
-            year = date.year
-            month = date.month
-            day = date.day
-            time = Time.now
-            hour = time.hour
+            hour = Time.now.hour
             minute = 13
             second = 37
 
