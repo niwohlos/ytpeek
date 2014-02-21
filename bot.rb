@@ -88,6 +88,9 @@ def load_data directory
 end
 
 class IRC
+    attr_reader :src, :chan, :nick, :port, :has_op, :has_joined, :plugins
+    attr_accessor :con
+
     def initialize(nick, channel, server = "irc.euirc.net", port = 6667)
         $binding = Kernel.binding
         @srv = server
@@ -123,7 +126,7 @@ class IRC
         exit 0 unless dependencies_satisfied
 
         @plugins.each do |plugin|
-            plugin.startup.call plugin.name
+            plugin.startup.call plugin.name, self
 
             @commands += load_data("plugins/#{plugin.name}/commands")
         end
@@ -138,6 +141,10 @@ class IRC
     def send(msg)
         puts("<- " + msg)
         @con.send(msg + "\n", 0)
+    end
+    def inject(msg)
+        @con.ungetbyte(msg + "\n")
+        send("PING #{@nick}")
     end
     def read
         msg = @con.gets().strip.force_encoding("utf-8")
@@ -399,7 +406,7 @@ class IRC
                 puts("Shutting down plugins...")
                 @plugins.each do |plugin|
                     next unless $loaded_plugins.include? plugin.name
-                    plugin.shutdown.call plugin.name
+                    plugin.shutdown.call plugin.name, self
                 end
                 puts("Done, exiting.")
                 exit 0
@@ -421,7 +428,7 @@ if Signal.list.include? "HUP"
             puts("Shutting down plugins...")
             plugins.each do |plugin|
                 next unless $loaded_plugins.include? plugin.name
-                plugin.shutdown.call plugin.name
+                plugin.shutdown.call plugin.name, self
             end
             puts("Done, exiting.")
             exit 0
@@ -439,7 +446,7 @@ trap "TERM" do
         puts("Shutting down plugins...")
         plugins.each do |plugin|
             next unless $loaded_plugins.include? plugin.name
-            plugin.shutdown.call plugin.name
+            plugin.shutdown.call plugin.name, self
         end
         puts("Done, exiting.")
         exit 0
