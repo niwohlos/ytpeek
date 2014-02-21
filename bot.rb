@@ -410,20 +410,22 @@ class IRC
     end
 end
 
-trap "HUP" do
-    Thread.new do
-        puts("\nShutting down, writing data to .rubybot...")
-        File.open(".rubybot", "w") { |f|
-            f.write({ "karmas" => $karmas, "watt" => $watt, "wfw" => $wfw, "urls" => $urls }.to_yaml)
-        }
-        plugins = load_data "plugins"
-        puts("Shutting down plugins...")
-        plugins.each do |plugin|
-            next unless $loaded_plugins.include? plugin.name
-            plugin.shutdown.call plugin.name
+if Signal.list.include? "HUP"
+    trap "HUP" do
+        Thread.new do
+            puts("\nShutting down, writing data to .rubybot...")
+            File.open(".rubybot", "w") { |f|
+                f.write({ "karmas" => $karmas, "watt" => $watt, "wfw" => $wfw, "urls" => $urls }.to_yaml)
+            }
+            plugins = load_data "plugins"
+            puts("Shutting down plugins...")
+            plugins.each do |plugin|
+                next unless $loaded_plugins.include? plugin.name
+                plugin.shutdown.call plugin.name
+            end
+            puts("Done, exiting.")
+            exit 0
         end
-        puts("Done, exiting.")
-        exit 0
     end
 end
 
