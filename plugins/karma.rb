@@ -20,6 +20,9 @@
             end
 
             $karmas = Hash.new if !$karmas
+
+            # return karma 0 if key doesn't exist
+            $karmas = Hash.new(0).merge($karmas)
         end
     },
     shutdown: Proc.new { |name|

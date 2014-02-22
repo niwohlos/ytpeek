@@ -6,8 +6,6 @@
         if @source && (who == @source.downcase)
             send("PRIVMSG %s :Wage es ja nicht, %s..." % [ @chan, inmatch ])
         else
-            $karmas[who] = 0 if !$karmas[who]
-
             if karma_match[2] == "++"
                 if $nazistuff.include?(who)
                     send("MODE %s -Q" % [ @chan ])
