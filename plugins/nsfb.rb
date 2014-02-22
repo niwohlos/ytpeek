@@ -10,10 +10,8 @@
     startup: Proc.new { |name, irc|
         FileUtils.mkdir_p "plugins/#{name}/data"
 
-        if File.exists? "plugins/#{name}/data/items.yaml"
-            $nsfb = YAML.load_file "plugins/#{name}/data/items.yaml"
-        end
-
+        $nsfb = load_data "plugins/#{name}/data"
+        $nsfb.flatten!
     },
     shutdown: Proc.new { |name, irc|
     }
