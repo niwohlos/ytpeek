@@ -2,16 +2,18 @@
     pattern: /^!pdp$/,
     channelonly: false,
     command: Proc.new { |wtf_match|
+        has_karma = $watt.keys.any? do |key|
+            $karmas[key] != 0
+        end
+
         begin
-            entry = $watt.to_a[rand($watt.size)]
+            key = $watt.keys[rand($watt.size)]
 
-            karma = $karmas[entry[0]]
-            karma = 0 if !karma
-        # there better be some karma!
-        end while karma.eql? 0
+            karma = $karmas[key]
+        end while has_karma && karma.eql?(0)
 
-        desc = $watt[entry[0]]
-        who = $wfw[entry[0]]
+        desc = $watt[key]
+        who = $wfw[key]
         while desc && (desc[0] == "ref")
             who = $wfw[desc[1]]
             desc = $watt[desc[1]]
@@ -19,11 +21,11 @@
 
         if desc
             if who
-                send("PRIVMSG %s :%s (%s: „%s“) hat Karma %i" % [ @target, entry[0], who, desc, karma ])
-            elsif entry[1]
-                send("PRIVMSG %s :%s („%s“) hat Karma %i" % [ @target, entry[0], desc, karma ])
+                send("PRIVMSG %s :%s (%s: „%s“) hat Karma %i" % [ @target, key, who, desc, karma ])
+            elsif $watt[key]
+                send("PRIVMSG %s :%s („%s“) hat Karma %i" % [ @target, key, desc, karma ])
             else
-                send("PRIVMSG %s :%s (keine Beschreibung) hat Karma %i" % [ @target, entry[0], karma ])
+                send("PRIVMSG %s :%s (keine Beschreibung) hat Karma %i" % [ @target, key, karma ])
             end
         end
     }

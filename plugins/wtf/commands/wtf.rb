@@ -6,7 +6,6 @@
         entry = [ entry, $watt[entry] ]
 
         karma = $karmas[entry[0]]
-        karma = 0 if !karma
 
         desc = $watt[entry[0]]
         who = $wfw[entry[0]]
