@@ -3,7 +3,7 @@
         resources:
         [
             {
-                pattern: /9gag\.com\/gag\/(\d+)/,
+                pattern: /9gag\.com\/gag\/([a-zA-Z0-9]+)/,
                 group: 1,
             },
         ],
