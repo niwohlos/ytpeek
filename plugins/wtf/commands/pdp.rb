@@ -2,10 +2,13 @@
     pattern: /^!pdp$/,
     channelonly: false,
     command: Proc.new { |wtf_match|
-        entry = $watt.to_a[rand($watt.size)]
+        begin
+            entry = $watt.to_a[rand($watt.size)]
 
-        karma = $karmas[entry[0]]
-        karma = 0 if !karma
+            karma = $karmas[entry[0]]
+            karma = 0 if !karma
+        # there better be some karma!
+        end while karma.eql? 0
 
         desc = $watt[entry[0]]
         who = $wfw[entry[0]]
