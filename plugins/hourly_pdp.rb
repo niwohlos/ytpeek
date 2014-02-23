@@ -1,6 +1,6 @@
 {
     name: "hourly_pdp",
-    enabled: true,
+    enabled: false,
     help:
     [
     ],
