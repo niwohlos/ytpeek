@@ -30,6 +30,24 @@ class Hash
     end
 end
 
+class String
+    def utf8shorten!(maxlength)
+        return self unless bytesize > maxlength
+
+        puts 'shortening'
+
+        while bytesize > maxlength - 6
+            chop!
+        end
+
+        concat(' […]')
+    end
+
+    def utf8shorten(maxlength)
+        self.dup.utf8shorten!(maxlength)
+    end
+end
+
 $loaded_plugins = []
 
 $norepost = [ "ponyfac.es", "ragefac.es" ]
@@ -357,12 +375,16 @@ class IRC
 
                                         title = "Funny prank" if /\brickroll\b/i.match(title)
 
-                                        if (src == "alexander") || (src == "akluth") || (src == "DerHartmut")
-                                            send("PRIVMSG %s :Der alte Lustmolch %s präsentiert Ihnen heute (Taschentücher bereithalten): „%s“" % [ @chan, src, title ])
+                                        if ['alexander', 'akluth', 'derhartmut'].include?(src.downcase)
+                                            full_msg_wo_end_quote = "PRIVMSG #{@chan} :Der alte Lustmolch #{src} präsentiert Ihnen heute (Taschentücher bereithalten): „#{title}"
                                         else
-                                            send("PRIVMSG %s :%s präsentiert Ihnen heute: „%s“" % [ @chan, src, title ])
+                                            full_msg_wo_end_quote = "PRIVMSG #{@chan} :#{src} präsentiert Ihnen heute: „#{title}"
                                         end
-                                        send("PRIVMSG %s :nazi" % @chan) if /\b[Mm]ars?ch\b/.match(title)
+
+                                        # If the message needs to be shortened, the '“' should not be stripped but
+                                        # instead follow the '[…]'; therefore, it is added here after shortening the
+                                        # message appropriately.
+                                        send(full_msg_wo_end_quote.utf8shorten(443) + '“')
                                     end
 
                                     escape = true
