@@ -333,7 +333,8 @@ class IRC
                                     end
 
                                     if title
-                                        title.gsub!(/<[^>]*>/, '')
+                                        title = title.gsub(/<br[^>]*>/, "⁋")
+                                                     .gsub(/<[^>]*>/, '')
 
                                         title = CGI.unescapeHTML(title)
 
@@ -342,8 +343,11 @@ class IRC
                                         end
 
 
-                                        title.strip!
-                                        title.gsub!(/\s+/, " ")
+                                        title = title.strip
+                                                     .gsub(/\s+/, " ")
+                                                     .gsub(/⁋⁋+/, "⁋")
+                                                     .sub(/^⁋/, "")
+                                                     .sub(/⁋$/, "")
 
                                         for appendix in rule.remove
                                             title.gsub!(appendix, "")
