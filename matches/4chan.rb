@@ -3,7 +3,7 @@
         resources:
         [
             {
-                pattern: /boards\.4chan\.org\/((\w+)\/res\/\d+)#p(\d+)/,
+                pattern: /boards\.4chan\.org\/((\w+)\/res\/\d+)\S*#p(\d+)/,
                 group: 1,
             },
         ],
