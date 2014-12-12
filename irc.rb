@@ -61,6 +61,12 @@ module YTPeek
     def add_subscriber(type, callback)
       @subscribers[type] ||= []
       @subscribers[type] << callback
+      @subscribers[type].last.__id__
+    end
+
+    def remove_subscriber(type, handle)
+      @subscribers[type] ||= []
+      @subscribers[type] = @subscribers[type].reject { |callback| callback.eql?(handle) }
     end
   end
 end

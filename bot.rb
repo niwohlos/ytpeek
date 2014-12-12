@@ -7,6 +7,8 @@ module YTPeek
   class Bot
     def initialize(username, server, channels = [])
       @storage = {}
+      @irc = IRC.new(username, server, channels: channels)
+      @plugins = PluginManager.load_plugins(self, @irc)
 
       if File::exists?(".rubybot")
         @storage = YAML::load_file(".rubybot")
@@ -17,11 +19,7 @@ module YTPeek
       trap('KILL') { on_shutdown() }
 
       begin
-        irc = IRC.new(username, server, channels: channels)
-
-        p plugins = PluginManager.load_plugins(self, irc)
-
-        irc.live()
+        @irc.live()
       rescue Interrupt
         on_shutdown()
       end
@@ -35,13 +33,12 @@ module YTPeek
         File.open('.rubybot', 'w') do |f|
           f.write(@storage.to_yaml)
 
-          plugins = load_data('plugins')
           puts('Shutting down plugins...')
-          plugins.each do |plugin|
-            next unless $loaded_plugins.include?(plugin.name)
-            plugin.shutdown.call(plugin.name, self)
-          end
+
+          PluginManager.unload_plugins(self, @irc, @plugins)
+
           puts('Done, exiting.')
+
           exit 0
         end
       end.join
