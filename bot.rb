@@ -6,21 +6,11 @@ require_relative 'plugin_manager'
 module YTPeek
   class Bot
     def initialize(username, server, channels = [])
+      @storage = {}
+
       if File::exists?(".rubybot")
-        settings = YAML::load_file(".rubybot")
-        $karmas = settings["karmas"]
-        $watt   = settings["watt"  ]
-        $wfw    = settings["wfw"   ]
-        $urls   = settings["urls"  ]
+        @storage = YAML::load_file(".rubybot")
       end
-
-      $karmas ||= Hash.new
-      $watt   ||= Hash.new
-      $wfw    ||= Hash.new
-      $urls   ||= Hash.new
-
-      $last_incer = Hash.new
-      $last_decer = Hash.new
 
       trap('HUP') { on_shutdown() } if Signal.list.include?('HUP')
       trap('TERM') { on_shutdown() }
@@ -43,12 +33,7 @@ module YTPeek
         puts('Shutting down, writing data to .rubybot...')
 
         File.open('.rubybot', 'w') do |f|
-          f.write({
-            karmas: $karmas,
-            watt: $watt,
-            wfw: $wfw,
-            urls: $urls
-          }.to_yaml)
+          f.write(@storage.to_yaml)
 
           plugins = load_data('plugins')
           puts('Shutting down plugins...')
