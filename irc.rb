@@ -17,8 +17,8 @@ module YTPeek
     def live
       @connection = TCPSocket.open(@server, @port)
 
-      send_message("USER " + @nick + " " + @nick + " " + @nick + " " + @nick)
-      send_message("NICK " + @nick)
+      send_message('USER ' + @nick + ' ' + @nick + ' ' + @nick + ' ' + @nick)
+      send_message('NICK ' + @nick)
 
       while true do
         next unless (sockets = select([@connection], nil, nil, nil))
@@ -38,7 +38,8 @@ module YTPeek
     end
 
     def receive_message()
-      message = @connection.gets.strip.force_encoding("utf-8")
+      message = @connection.gets.strip.force_encoding('UTF-8')
+
       unless message.valid_encoding?
         @logger.error('! ' + message, loggee: self)
 
