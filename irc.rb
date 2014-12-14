@@ -3,7 +3,7 @@ require_relative 'logger'
 
 module YTPeek
   class IRC
-    attr_reader :server, :channel, :nick, :port
+    attr_reader :server, :channels, :nick, :port
 
     def initialize(nick, server = "irc.euirc.net", options = {})
       @server = server
