@@ -17,11 +17,7 @@ module YTPeek
       processed_message = "#{loggee}#{type.upcase}" << (' :' unless loggee.eql?('irc.')).to_s << " #{message}"
 
       case type
-        when :warning
-        when :error
-        when :critical
-        when :alert
-        when :emergency
+        when :warning, :error, :critical, :alert, :emergency
           warn processed_message
         else
           puts processed_message
