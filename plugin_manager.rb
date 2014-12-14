@@ -6,7 +6,7 @@ module YTPeek
             Dir.glob('plugins/**/*.rb').map do |plugin_name|
                 load(plugin_name)
 
-                name = File.basename(plugin_name, '.rb').split('_').map { |name| name.capitalize }.join
+                name = File.basename(plugin_name, '.rb').split('_').map { |name| name.capitalize }.join.+('Plugin')
 
                 plugin = const_get(name).new
                 plugin.on_plugin_startup(bot, irc)
