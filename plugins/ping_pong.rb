@@ -4,7 +4,7 @@ class PingPongPlugin < YTPeek::Plugin
   end
 
   def on_plugin_shutdown(bot, irc)
-    irc.remove_subscriber(@handles.delete(:on_ping))
+    irc.remove_subscriber(:on_ping, @handles.delete(:on_ping))
   end
 
   def on_ping(message, irc, logger)

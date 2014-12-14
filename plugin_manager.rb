@@ -10,12 +10,14 @@ module YTPeek
 
                 plugin = const_get(name).new
                 plugin.on_plugin_startup(bot, irc)
+
+                plugin
             end
         end
 
         def self.unload_plugins(bot, irc, plugins)
             plugins.each do |plugin|
-                plugin.on_plugin_shutdown.call(bot, irc)
+                plugin.on_plugin_shutdown(bot, irc)
             end
         end
     end

@@ -4,7 +4,7 @@ class JoinAfterConnectPlugin < YTPeek::Plugin
   end
 
   def on_plugin_shutdown(bot, irc)
-    irc.remove_subscriber(@handles.delete(:on_eo_motd))
+    irc.remove_subscriber(:on_376, @handles.delete(:on_eo_motd))
   end
 
   def on_eo_motd(message, irc, logger)
