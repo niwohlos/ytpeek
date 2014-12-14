@@ -33,20 +33,19 @@ module YTPeek
     end
 
     def send_message(message)
-      @logger.info('-> ' + message)
+      @logger.info('> ' + message, loggee: self)
       @connection.puts(message + "\n", 0)
     end
 
     def receive_message()
       message = @connection.gets.strip.force_encoding("utf-8")
-
       unless message.valid_encoding?
-        @logger.error('<! ' + message)
+        @logger.error('! ' + message, loggee: self)
 
         return true
       end
 
-      @logger.info('<- ' + message)
+      @logger.info('< ' + message, loggee: self)
 
       handler = :"on_#{message[/^\S+/].downcase}"
 

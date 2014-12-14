@@ -10,6 +10,8 @@ class PingPongPlugin < YTPeek::Plugin
   def on_ping(message, irc, logger)
     message.scan(/(:.+)$/)
 
+    logger.debug('received ping "{payload}"', loggee: self, payload: $1)
+
     irc.send_message("PONG #{$1}")
   end
 end

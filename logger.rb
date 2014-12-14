@@ -6,12 +6,15 @@ module YTPeek
       end
     end
 
-    def log(type, message, context = {})
-      return unless message.is_a? String
+    def log(type, message, context = { loggee: nil })
+      loggee = context.delete(:loggee).class.to_s.split('::').last.downcase << '.'
+      loggee = 'app.' if loggee.eql?('nilclass.')
 
       context.each_pair do |key, value|
         message.gsub!(/\{#{key}\}/, value)
       end
+
+      processed_message = "#{loggee}#{type.upcase}" << (' :' unless loggee.eql?('irc.')).to_s << " #{message}"
 
       case type
         when :warning
@@ -19,9 +22,9 @@ module YTPeek
         when :critical
         when :alert
         when :emergency
-          warn "#{type.upcase} #{message}"
+          warn processed_message
         else
-          puts "#{type.upcase} #{message}"
+          puts processed_message
       end
     end
   end
