@@ -48,7 +48,7 @@ module YTPeek
 
       @logger.info('< ' + message, loggee: self)
 
-      handler = :"on_#{message[/^\S+/].downcase}"
+      handler = :"on_#{message.scan(/^(?::\S+\s+)?(?<command>\S+)/).first.last.downcase}"
 
       @subscribers[handler] ||= []
       @subscribers[handler].each do |subscriber|
