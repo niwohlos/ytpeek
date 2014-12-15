@@ -9,9 +9,6 @@ class JoinAfterConnectPlugin < YTPeek::Plugin
 
   def on_eo_motd(_, irc, _)
     irc.send_message("MODE #{irc.nick} +B")
-
-    irc.channels.each do |channel|
-      irc.send_message("JOIN #{channel}")
-    end
+    irc.send_message("JOIN #{irc.channel}")
   end
 end

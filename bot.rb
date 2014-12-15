@@ -7,9 +7,9 @@ module YTPeek
   class Bot
     attr_reader :storage
 
-    def initialize(username, server, channels = [])
+    def initialize(username, server, channel)
       @storage = YAML::load_file(".rubybot") rescue {} # load first
-      @irc = IRC.new(username, server, channels: channels)
+      @irc = IRC.new(username, server, channel)
       @plugins = PluginManager.load_plugins(self, @irc)
 
       trap('HUP') { on_shutdown() } if Signal.list.include?('HUP')
