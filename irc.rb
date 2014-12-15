@@ -34,7 +34,7 @@ module YTPeek
 
     def send_message(message)
       @logger.info('> ' + message, loggee: self)
-      @connection.puts(message + "\n", 0)
+      @connection.puts(message)
     end
 
     def receive_message()
