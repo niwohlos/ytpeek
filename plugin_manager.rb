@@ -1,4 +1,5 @@
 require_relative 'plugin'
+require_relative 'command'
 
 module YTPeek
     class PluginManager
