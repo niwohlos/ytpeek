@@ -5,7 +5,7 @@ require_relative 'plugin_manager'
 
 module YTPeek
   class Bot
-    attr_reader :storage
+    attr_reader :storage, :plugins
 
     def initialize(username, server, channel)
       @storage = YAML::load_file(".rubybot") rescue {} # load first
