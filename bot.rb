@@ -5,14 +5,12 @@ require_relative 'plugin_manager'
 
 module YTPeek
   class Bot
+    attr_reader :storage
+
     def initialize(username, server, channels = [])
-      @storage = {}
+      @storage = YAML::load_file(".rubybot") rescue {} # load first
       @irc = IRC.new(username, server, channels: channels)
       @plugins = PluginManager.load_plugins(self, @irc)
-
-      if File::exists?(".rubybot")
-        @storage = YAML::load_file(".rubybot")
-      end
 
       trap('HUP') { on_shutdown() } if Signal.list.include?('HUP')
       trap('TERM') { on_shutdown() }
