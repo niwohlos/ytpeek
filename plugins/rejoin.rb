@@ -1,14 +1,14 @@
 class RejoinPlugin < YTPeek::Plugin
   def on_plugin_startup(_, irc)
-    @handles[:on_ping] = irc.add_subscriber(:on_ping, ->(*args){ on_ping(*args) })
-    @handles[:on_name_reply] = irc.add_subscriber(:on_353, ->(*args){ on_name_reply(*args) })
-    @handles[:on_eo_names] = irc.add_subscriber(:on_366, ->(*args){ on_eo_names(*args) })
+    @handles[:on_ping] = irc.add_subscriber(:on_rcv_ping, ->(*args){ on_ping(*args) })
+    @handles[:on_name_reply] = irc.add_subscriber(:on_rcv_353, ->(*args){ on_name_reply(*args) })
+    @handles[:on_eo_names] = irc.add_subscriber(:on_rcv_366, ->(*args){ on_eo_names(*args) })
   end
 
   def on_plugin_shutdown(_, irc)
-    irc.remove_subscriber(:on_ping, @handles.delete(:on_ping))
-    irc.remove_subscriber(:on_353, @handles.delete(:on_name_reply))
-    irc.remove_subscriber(:on_366, @handles.delete(:on_eo_names))
+    irc.remove_subscriber(:on_rcv_ping, @handles.delete(:on_ping))
+    irc.remove_subscriber(:on_rcv_353, @handles.delete(:on_name_reply))
+    irc.remove_subscriber(:on_rcv_366, @handles.delete(:on_eo_names))
   end
 
   def on_ping(_, irc, _)

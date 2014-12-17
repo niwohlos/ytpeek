@@ -34,6 +34,16 @@ module YTPeek
 
     def send_message(message)
       @logger.info('> ' + message, loggee: self)
+
+      handler = :"on_snd_#{message.scan(/^(?::\S+\s+)?(?<command>\S+)/).first.last.downcase}"
+
+      @logger.debug('@ ' + handler.to_s, loggee: self)
+
+      @subscribers[handler] ||= []
+      @subscribers[handler].each do |subscriber|
+        return false if subscriber.call(message, self, @logger).eql?(false)
+      end
+
       @connection.puts(message)
     end
 
@@ -48,7 +58,7 @@ module YTPeek
 
       @logger.info('< ' + message, loggee: self)
 
-      handler = :"on_#{message.scan(/^(?::\S+\s+)?(?<command>\S+)/).first.last.downcase}"
+      handler = :"on_rcv_#{message.scan(/^(?::\S+\s+)?(?<command>\S+)/).first.last.downcase}"
 
       @subscribers[handler] ||= []
       @subscribers[handler].each do |subscriber|

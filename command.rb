@@ -3,11 +3,11 @@ require_relative 'plugin'
 module YTPeek
   class Command < Plugin
     def on_plugin_startup(bot, irc)
-      @handles[:on_privmsg] = irc.add_subscriber(:on_privmsg, ->(*args){ on_privmsg(*args) })
+      @handles[:on_privmsg] = irc.add_subscriber(:on_rcv_privmsg, ->(*args){ on_privmsg(*args) })
     end
 
     def on_plugin_shutdown(_, irc)
-      irc.remove_subscriber(:on_privmsg, @handles.delete(:on_privmsg))
+      irc.remove_subscriber(:on_rcv_privmsg, @handles.delete(:on_privmsg))
     end
 
     def on_privmsg(message, irc, logger)
