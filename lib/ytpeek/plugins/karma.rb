@@ -3,6 +3,7 @@ require 'fileutils'
 class KarmaPlugin < YTPeek::Command
   def on_plugin_startup(bot, irc)
     @storage = bot.storage
+    @storage[:karmas] ||= {}
     @storage[:karmas] = Hash.new(0).merge(@storage[:karmas])
     @storage[:karmas_increment] = {}
     @storage[:karmas_decrement] = {}

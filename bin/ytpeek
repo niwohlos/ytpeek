@@ -1,3 +1,5 @@
-require_relative 'bot'
+#!/usr/bin/env ruby
+
+require_relative '../lib/ytpeek/bot'
 
 YTPeek::Bot.new('rewritepeek', 'irc.nbg.de.euirc.net', '#typeek')

@@ -1,6 +1,5 @@
 require 'yaml'
 require_relative 'irc'
-# require_relative 'plugin'
 require_relative 'plugin_manager'
 
 module YTPeek
