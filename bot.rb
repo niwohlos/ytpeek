@@ -159,6 +159,7 @@ class IRC
     def send(msg)
         puts("<- " + msg)
         @con.send(msg + "\n", 0)
+	sleep(0.4)
     end
     def inject(msg)
         @con.ungetbyte(msg + "\n")
