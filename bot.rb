@@ -324,7 +324,8 @@ class IRC
                             for resource in rule.resources
                                 um = resource.pattern.match(msg)
                                 if um
-                                    incoming = http_request((rule.cleanurl + (rule.cleanurl.include?('<match>') ? '' : '<match>')).gsub('<match>', um[resource.group]))
+                                    match_url = (rule.cleanurl + (rule.cleanurl.include?('<match>') ? '' : '<match>')).gsub('<match>', um[resource.group])
+                                    incoming = http_request match_url
 
                                     if !incoming[0]
                                         send("PRIVMSG #{@chan} :#{src} ist heute für einen #{incoming[1]} verantwortlich.")
@@ -369,7 +370,11 @@ class IRC
                                                      .sub(/⁋$/, "")
 
                                         for appendix in rule.remove
-                                            title.gsub!(appendix, "")
+                                            if appendix.respond_to? :call
+                                                title = appendix.call title, match_url
+                                            else
+                                                title.gsub!(appendix, "")
+                                            end
                                         end
 
                                         break if title == ""
