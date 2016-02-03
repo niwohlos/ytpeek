@@ -48,6 +48,36 @@ class String
     end
 end
 
+class TCPSocket
+    def connect(host, port, timeout = 30)
+        addr = Socket.getaddrinfo(host, nil)
+        sockaddr = Socket.pack_sockaddr_in(port, addr[0][3])
+
+        Socket.new(Socket.const_get(addr[0][0]), Socket::SOCK_STREAM, 0).tap do |socket|
+            socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
+
+            begin
+                socket.connect_nonblock(sockaddr)
+            rescue IO::WaitWritable
+                if IO.select(nil, [ socket ], nil, timeout)
+                    begin
+                        socket.connect_nonblock(sockaddr)
+                    rescue Errno::EISCONN
+                    rescue
+                        socket.close
+
+                        raise
+                    end
+                else
+                    socket.close
+
+                    raise 'Connection timeout'
+                end
+            end
+        end
+    end
+end
+
 $loaded_plugins = []
 
 $norepost = [ "ponyfac.es", "ragefac.es" ]
@@ -409,7 +439,7 @@ class IRC
                         result = nil
 
                         begin
-                            tagger = TCPSocket.new('xanclic.moe', 1112)
+                            tagger = TCPSocket.new('xanclic.moe', 1112, 10)
                         rescue
                             tagger = nil
                         end
