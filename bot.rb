@@ -404,6 +404,68 @@ class IRC
                             break if escape
                         end
                     end
+
+                    if url_match
+                        result = nil
+
+                        begin
+                            tagger = TCPSocket.new('xanclic.moe', 1112)
+                        rescue
+                            tagger = nil
+                        end
+                        if tagger
+                            tagger.puts(url_match[0])
+                            begin
+                                result = tagger.readline()
+                            rescue
+                                result = nil
+                            end
+
+                            tagger.close()
+                        end
+
+                        if result
+                            begin
+                                result = JSON.parse(result)
+                                result = result[0]
+
+                                result['rating'] = Hash[result['rating']]
+
+                                result['character'] = [] unless result['character']
+                                result['copyright'] = [] unless result['copyright']
+                                result['general'] = [] unless result['general']
+                            rescue
+                                result = nil
+                            end
+                        end
+
+                        if result
+                            rating = '%.1f %% SFW, %.1f %% explicit' % [result['rating']['safe'] * 100.0,
+                                                                        result['rating']['explicit'] * 100.0]
+
+                            if result['character'][0] && result['copyright'][0]
+                                sauce = '%s (%.1f %%) from %s (%.1f %%)' % [result['character'][0][0],
+                                                                            result['character'][0][1] * 100.0,
+                                                                            result['copyright'][0][0],
+                                                                            result['copyright'][0][1] * 100.0]
+                            elsif result['copyright'][0]
+                                sauce = 'from %s (%.1f %%)' % [result['copyright'][0][0],
+                                                               result['copyright'][0][1] * 100.0]
+                            elsif result['character'][0]
+                                sauce = '%s (%.1f %%)' % [result['character'][0][0],
+                                                          result['character'][0][1] * 100.0]
+                            else
+                                sauce = nil
+                            end
+                            saucestr = sauce ? "; #{sauce}" : ''
+
+                            tags = result['general'][0..4].map { |tag|
+                                '%s (%.1f %%)' % [tag[0], tag[1] * 100.0]
+                            } * ', '
+
+                            send("PRIVMSG #{@chan} :#{tags}#{saucestr} (#{rating})")
+                        end
+                    end
                 end
             end
         end
