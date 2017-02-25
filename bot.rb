@@ -409,7 +409,8 @@ class IRC
 
                                         break if title == ""
 
-                                        title = "Funny prank" if /\brickroll\b/i.match(title)
+                                        title = "Just a prank, bro" if /\brickroll\b/i.match(title)
+                                        title = "Just a prank, bro" if /\bnever gonna give you up\b/i.match(title)
 
                                         if ['alexander', 'akluth', 'derhartmut'].include?(src.downcase)
                                             full_msg_wo_end_quote = "PRIVMSG #{@chan} :Der alte Lustmolch #{src} präsentiert Ihnen heute (Taschentücher bereithalten): „#{title}"
