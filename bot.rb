@@ -526,7 +526,7 @@ class IRC
             t = Thread.new do
                 puts("\nShutting down, writing data to .rubybot...")
                 File.open(".rubybot", "w") { |f|
-                f.write({ "karmas" => $karmas, "watt" => $watt, "wfw" => $wfw, "urls" => $urls }.to_yaml)
+                    f.write({ "urls" => $urls }.to_yaml)
                 }
                 puts("Shutting down plugins...")
                 @plugins.each do |plugin|
@@ -547,7 +547,7 @@ if Signal.list.include? "HUP"
         Thread.new do
             puts("\nShutting down, writing data to .rubybot...")
             File.open(".rubybot", "w") { |f|
-                f.write({ "karmas" => $karmas, "watt" => $watt, "wfw" => $wfw, "urls" => $urls }.to_yaml)
+                f.write({ "urls" => $urls }.to_yaml)
             }
             plugins = load_data "plugins"
             puts("Shutting down plugins...")
@@ -565,7 +565,7 @@ trap "TERM" do
     Thread.new do
         puts("\nShutting down, writing data to .rubybot...")
         File.open(".rubybot", "w") { |f|
-            f.write({ "karmas" => $karmas, "watt" => $watt, "wfw" => $wfw, "urls" => $urls }.to_yaml)
+            f.write({ "urls" => $urls }.to_yaml)
         }
         plugins = load_data "plugins"
         puts("Shutting down plugins...")
@@ -578,30 +578,17 @@ trap "TERM" do
     end
 end
 
-$karmas = nil
-$watt   = nil
-$wfw    = nil # watt from who
-$urls   = nil
+$urls = nil
 
 if File::exists?(".rubybot")
     settings = YAML::load_file(".rubybot")
-    $karmas = settings["karmas"]
-    $watt   = settings["watt"  ]
-    $wfw    = settings["wfw"   ]
-    $urls   = settings["urls"  ]
+    $urls = settings["urls"]
 end
 
-$karmas = Hash.new if !$karmas
-$watt   = Hash.new if !$watt
-$wfw    = Hash.new if !$wfw
-$urls   = Hash.new if !$urls
+$urls = Hash.new if !$urls
 
 $last_incer = Hash.new
 $last_decer = Hash.new
-
-if File::exists?(".rubybot")
-    system("cp .rubybot .rubybot.save")
-end
 
 
 irc = IRC.new("ytpeek", "#niwohlos", "irc.nbg.de.euirc.net")
