@@ -599,6 +599,10 @@ $urls   = Hash.new if !$urls
 $last_incer = Hash.new
 $last_decer = Hash.new
 
+if File::exists?(".rubybot")
+    system("cp .rubybot .rubybot.save")
+end
+
 
 irc = IRC.new("ytpeek", "#niwohlos", "irc.nbg.de.euirc.net")
 irc.connect()
